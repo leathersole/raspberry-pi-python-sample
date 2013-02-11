@@ -49,12 +49,22 @@ if __name__=="__main__":
     volume = 127
     port = 2
     
-    midiOutput = pygame.midi.Output(port, 1)
+    midiOutput = pygame.midi.Output(port, 0)
     midiOutput.set_instrument(instrument)
 
     key = s.getch()
     inputValue = GPIO.input(24)
+    play = False
+    samekey = False
+    midion = False
+    oldplay = False
+    oldvolume = 0
     while key!="q":
+      if key =="":
+        play = False
+      else:
+        play = True
+
       if key == "a":
         if inputValue == True:
           note = 60
@@ -70,11 +80,26 @@ if __name__=="__main__":
           note = 64
         else:
           note = 65
-      midiOutput.note_on(note,volume)
+
+      if samekey == False and midion == True:
+        midion =False
+        midiOutput.note_off(oldnote,oldvolume)
+      if play == True and oldplay == False:
+        midiOutput.note_on(note,volume)
+        midion = True
+        sleep(.01)
+      elif play == False:
+        midiOutput.note_on(note,0)
+        midion = True
+        sleep(.01)
+
+      oldkey = key
+      oldnote = note
+      oldvolume = volume
+      oldplay = play
       key = s.getch()
+      samekey = (oldkey == key)
       inputValue = GPIO.input(24)
-      sleep(1)
-      midiOutput.note_off(note,volume)
 
 
     del midiOutput
