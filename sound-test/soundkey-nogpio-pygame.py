@@ -1,7 +1,4 @@
 #!/usr/bin/python
-import os
- 
-os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
 import pygame
 import pygame.midi
@@ -9,7 +6,7 @@ import pygame.midi
 pygame.init()
 pygame.midi.init()
 
-pygame.display.set_mode((1,1))
+pygame.display.set_mode((640,480))
 
 instrument = 0
 note = 74
@@ -21,46 +18,30 @@ midiOutput.set_instrument(instrument)
 
 finished = False
 
-play = False
-samekey = False
-midion = False
-oldplay = False
-oldvolume = 0
+key2sound = {'a':60, 's':62, 'd':64 }
 
 print "Press q to quit..."
+currently_playing = {k : False for k in key2sound.iterkeys()}
 
 while not finished:
-  pygame.event.pump()
-  for event in pygame.event.get():
-    if event.type == pygame.QUIT:
+
+  event =  pygame.event.wait()
+
+  if event.type == pygame.QUIT:
+    finished = True
+  elif event.type in (pygame.KEYDOWN,pygame.KEYUP):
+    key = pygame.key.name(event.key)
+    if key == 'q':
       finished = True
-    if event.type == pygame.KEYDOWN:
-      if event.key == pygame.K_a:
-          note = 60
-      elif key == pygame.K_s: 
-          note = 62
-      elif key == pygame.K_d: 
-          note = 64
-      elif key == pygame.K_q: 
-          finished = True
 
-    if samekey == False and midion == True:
-      midion =False
-      midiOutput.note_off(oldnote,oldvolume)
-    if play == True and oldplay == False:
-      midiOutput.note_on(note,volume)
-      midion = True
-      sleep(.01)
-    elif play == False:
-      midiOutput.note_on(note,0)
-      midion = True
-      sleep(.01)
-
-    oldkey = event.key
-    oldnote = note
-    oldvolume = volume
-    oldplay = play
-    samekey = (oldkey == event.key)
+    if key in key2sound:
+      if event.type == pygame.KEYDOWN:
+        note = key2sound[key]
+        midiOutput.note_on(note,volume)
+        currently_playing[key] = True
+      elif event.type == pygame.KEYUP:
+        midiOutput.note_off(note,volume)
+        currently_playing[key] = False
 
 del midiOutput
 pygame.midi.quit()
